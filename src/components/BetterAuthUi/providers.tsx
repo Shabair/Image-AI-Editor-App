@@ -15,10 +15,25 @@ export function Providers({ children }: { children: ReactNode }) {
             authClient={authClient}
             navigate={router.push.bind(router)}
             replace={router.replace.bind(router)}
-            onSessionChange={() => {
+            onSessionChange={async () => {
                 // Clear router cache (protected routes)
-                router.refresh()
-            }}
+                router.refresh();
+        
+                // Check if user is authenticated and redirect to dashboard
+                try {
+                  const session = await authClient.getSession();
+                  if (session.data?.user && typeof window !== "undefined") {
+                    const currentPath = window.location.pathname;
+                    // Only redirect if we're on an auth page
+                    if (currentPath.startsWith("/auth/")) {
+                      router.push("/dashboard");
+                    }
+                  }
+                } catch (error) {
+                  // Session check failed, user likely logged out
+                  console.log("Session check failed:", error);
+                }
+              }}
             Link={Link}
         >
             {children}
